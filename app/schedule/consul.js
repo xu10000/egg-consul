@@ -22,9 +22,9 @@ class PassServices extends Subscription {
       const key = `apiConsulMulti${app.config.name}${app.config.env}`;
       const res = await redis.use(this.app, 'serviceHostCache', 'set', [ key, 1, 'ex', 3, 'nx' ]);
 
-      // if (!res.result) {
-      //   return;
-      // }
+      if (!res.result) {
+        return;
+      }
 
       // ctx.logger.debug(`consulHelper addr ${x == consulHelper}`);
       // x = consulHelper;

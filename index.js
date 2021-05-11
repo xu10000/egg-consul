@@ -150,8 +150,12 @@ class Consul {
 
   async getRemoteServiceByName(app, name) {
     try {
-
-      const { error, result } = await redis.use(app, 'serviceHostCache', 'get', [ name ]);
+      let env = app.config.env;
+      // 本地环境特殊处理
+      if (env === 'local') {
+        env = 'test';
+      }
+      const { error, result } = await redis.use(app, 'serviceHostCache', 'get', [ name + env ]);
       if (error) {
         return {
           error,
@@ -161,6 +165,7 @@ class Consul {
         throw new Error(`找不到${name}对应的服务`);
       }
 
+      //   utils.printError(app, `xxxxxxxxxxx  ${name + env}  `, result);
       const hosts = result.split(',');
       const random = utils.random(hosts.length);
       return {

@@ -28,15 +28,21 @@
 
 ​			redis:  172.31.0.116:19000  db: 3 
 
+
+
 ### 2.项目所在的服务器和端口，要对consul开放
 
 ​    a. 比如我服务部署在测试服, 内网ip   172.31.16.180，端口8804，则需要对测试服的consul开放。即 172.31.16.180:8804 对172.31.23.65开放。（consul的ip列表在上面，本地环境则忽略，不需要此配置）
 
 ​	b. 项目安装插件 npm install egg-consul --save
 
+
+
 ### 3. 特殊的本地环境
 
 ​	a. 因为consul注册发现是根据内网ip，本地环境无法参数到内网ip中，所以插件在发现是本地运行时，注册的ip和端口是测试环境中网关的服务，否则将报错，程序无法执行。
+
+
 
 ### 4. 配置
 
@@ -88,6 +94,7 @@ exports.consul = {
 ```
 // 在代码中获取其它服务的随机一个ip和端口, 因为本地环境的特殊性，所以获取的也是测试服的其它服务。
 const consulSdwk = require('egg-consul/app/index.js');
+
 // 返回: { host: 'x.x.x.x:8809', error: null }, 第二个参数为注册的服务名
 let urlObj = await consulSdwk.getRemoteServiceByName(this.app, 'growthUser');
 ```

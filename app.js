@@ -1,6 +1,6 @@
 'use strict';
 
-const sdwkConsul = require('./index');
+const sdwkConsul = require('./app/index');
 
 module.exports = async app => {
   if (!app.config.consul || !app.config.redis.clients.serviceHostCache) {

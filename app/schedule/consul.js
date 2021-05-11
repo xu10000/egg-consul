@@ -1,7 +1,7 @@
 'use strict';
 
 const Subscription = require('egg').Subscription;
-const consulHelper = require('../../index');
+const consulHelper = require('../index');
 const utils = require('../utils/utils');
 // const x = null;
 const redis = require('../utils/redis.js');

@@ -1,7 +1,7 @@
 'use strict';
 const _consul = require('consul');
-const redis = require('./app/utils/redis.js');
-const utils = require('./app/utils/utils.js');
+const redis = require('./utils/redis.js');
+const utils = require('./utils/utils.js');
 const healthTimeout = '2s';
 const registerTimeout = '5s';
 const MAXERROR = 10;

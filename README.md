@@ -87,7 +87,7 @@ exports.consul = {
 
 ```
 // 在代码中获取其它服务的随机一个ip和端口, 因为本地环境的特殊性，所以获取的也是测试服的其它服务。
-const consulSdwk = require('egg-consul/index.js');
+const consulSdwk = require('egg-consul/app/index.js');
 // 返回: { host: 'x.x.x.x:8809', error: null }, 第二个参数为注册的服务名
 let urlObj = await consulSdwk.getRemoteServiceByName(this.app, 'growthUser');
 ```

@@ -8,11 +8,17 @@ const MAXERROR = 10;
 class Consul {
 
   async updateErrorHost(app, consul, serviceName, errorHosts) {
-    const res = await redis.use(app, 'serviceHostCache', 'hmget', [ `serviceNameError${app.config.env}`, serviceName, `${serviceName}Times` ]);
+    let env = app.config.env;
+    if (env === 'local') {
+      env = 'test';
+    }
+    const res = await redis.use(app, 'serviceHostCache', 'hmget', [ `serviceNameError${env}`, serviceName, `${serviceName}Times` ]);
     // 错误打到上限删除
-    if (parseInt(res.result[1]) === MAXERROR) {
-      await redis.use(app, 'serviceHostCache', 'hmset', [ `serviceNameError${app.config.env}`, serviceName, '', `${serviceName}Times`, 0 ]);
+    // utils.printError(app, `\n0000xxxx errorHosts ${errorHosts}`, new Error(''));
+    if (parseInt(res.result[1]) > MAXERROR) {
+      await redis.use(app, 'serviceHostCache', 'hmset', [ `serviceNameError${env}`, serviceName, '', `${serviceName}Times`, 0 ]);
       const ips = res.result[0].split(',');
+      // utils.printError(app, `\n111xxxxxxxx res.result[0] ${JSON.stringify(res.result[0])}`, new Error('xx'));
       for (let i = 0; i < ips.length; i++) {
         try {
           await consul.agent.service.deregister({
@@ -26,12 +32,12 @@ class Consul {
     }
     // 无内容  或者  不一样错误，清空次数，设置新次数
     if (!res.result[0] || (res.result[0] !== errorHosts)) {
-      await redis.use(app, 'serviceHostCache', 'hmset', [ `serviceNameError${app.config.env}`, serviceName, errorHosts, `${serviceName}Times`, 1 ]);
+      await redis.use(app, 'serviceHostCache', 'hmset', [ `serviceNameError${env}`, serviceName, errorHosts, `${serviceName}Times`, 1 ]);
       return;
     }
     // 同样错误,次数加1
     if (res.result[0] === errorHosts) {
-      await redis.use(app, 'serviceHostCache', 'hmset', [ `serviceNameError${app.config.env}`, `${serviceName}Times`, parseInt(res.result[1]) + 1 ]);
+      await redis.use(app, 'serviceHostCache', 'hmset', [ `serviceNameError${env}`, `${serviceName}Times`, parseInt(res.result[1]) + 1 ]);
     }
 
     //
@@ -57,7 +63,8 @@ class Consul {
 
           for (const _result of result) {
             app.coreLogger.info(`[egg-consul] get service success: ${serviceName}`);
-            const host = `${_result.Service.Address}:${_result.Service.Port}`;
+            // const host = `${_result.Service.Address}:${_result.Service.Port}`;
+            const host = _result.Service.ID;
             if (_result.Checks[1].Status === 'passing') {
               // 相同host不再加入数组
               if (passingHosts.includes(host)) {

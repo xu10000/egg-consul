@@ -75,6 +75,13 @@ config.redis = {
         },
     }
  }
+
+config.cluster = {
+    listen: {
+        port: 8911,  // 端口一定要在这配置，会根据这个服务的端口到配置中心去注册
+        hostname: '0.0.0.0',
+    },
+};
  
 //  plugin.js
 exports.consul = {

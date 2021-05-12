@@ -4,28 +4,36 @@ const redis = require('./utils/redis.js');
 const utils = require('./utils/utils.js');
 const healthTimeout = '2s';
 const registerTimeout = '5s';
-const MAXERROR = 10;
+const MAXERROR = 5;
 class Consul {
 
-  async updateErrorHost(app, consul, serviceName, errorHosts) {
+  async updateErrorHost(app, hosts, serviceName, errorHosts) {
     let env = app.config.env;
     if (env === 'local') {
       env = 'test';
     }
     const res = await redis.use(app, 'serviceHostCache', 'hmget', [ `serviceNameError${env}`, serviceName, `${serviceName}Times` ]);
     // 错误打到上限删除
-    // utils.printError(app, `\n0000xxxx errorHosts ${errorHosts}`, new Error(''));
+    // utils.printError(app, `\n0000 xxxx  res.result[1]  ${res.result[1]}`, new Error(''));
     if (parseInt(res.result[1]) > MAXERROR) {
       await redis.use(app, 'serviceHostCache', 'hmset', [ `serviceNameError${env}`, serviceName, '', `${serviceName}Times`, 0 ]);
       const ips = res.result[0].split(',');
-      // utils.printError(app, `\n111xxxxxxxx res.result[0] ${JSON.stringify(res.result[0])}`, new Error('xx'));
+      // utils.printError(app, `\nips----- ${JSON.stringify(ips)}`, new Error(''));
+
       for (let i = 0; i < ips.length; i++) {
-        try {
-          await consul.agent.service.deregister({
-            id: `${ips[i]}`,
-          });
-        } catch (err) {
-          app.coreLogger.warn('[egg-consul] 删除consul服务失败serviceName ', ips[i]);
+        // 每个节点都要删除
+        for (let j = 0; j < hosts.length; j++) {
+          try {
+            app.config.consul.client.host = hosts[j];
+            const consul = _consul(app.config.consul.client);
+            const xx = await consul.agent.service.deregister({
+              id: `${ips[i]}`,
+            });
+            utils.printError(app, `\n2222222222ips[i]----- ${JSON.stringify(ips[i])} xxxxx  ${JSON.stringify(xx)}`, new Error(''));
+
+          } catch (err) {
+            app.coreLogger.warn('[egg-consul] 删除consul服务失败serviceName ', ips[i]);
+          }
         }
       }
       return;
@@ -85,7 +93,7 @@ class Consul {
           const _passingHosts = passingHosts.join(',');
           const _criticalHosts = criticalHosts.join(',');
           if (criticalHosts.length && !isInit) {
-            await this.updateErrorHost(app, consul, serviceName, _criticalHosts);
+            await this.updateErrorHost(app, hosts, serviceName, _criticalHosts);
           }
 
           const { error } = await redis.use(app, 'serviceHostCache', 'set', [ serviceName + app.config.env, _passingHosts ]);
@@ -93,7 +101,9 @@ class Consul {
             throw error;
           }
         }
+
         return;
+
       } catch (err) {
         utils.printError(app, 'consul setPassingServices 出错', err);
       }
